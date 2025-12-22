@@ -15,29 +15,19 @@ public class StudentRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public Long save(Student student) {
+    public Optional<Long> findStudentIdByUserEmail(String email) {
         String sql = """
-            INSERT INTO students (user_id, grade_level)
-            VALUES (?, ?)
-            RETURNING id
+            SELECT s.id
+            FROM students s
+            JOIN users u ON u.id = s.user_id
+            WHERE u.email = ?
         """;
 
-        return jdbcTemplate.queryForObject(
-                sql,
-                Long.class,
-                student.getUserId(),
-                student.getGradeLevel()
+        return jdbcTemplate.query(sql,
+                rs -> rs.next()
+                        ? Optional.of(rs.getLong("id"))
+                        : Optional.empty(),
+                email
         );
-    }
-
-    public Optional<Student> findByUserId(Long userId) {
-        String sql = "SELECT * FROM students WHERE user_id = ?";
-        return jdbcTemplate.query(sql, (rs, i) ->
-                Student.builder()
-                        .id(rs.getLong("id"))
-                        .userId(rs.getLong("user_id"))
-                        .gradeLevel(rs.getString("grade_level"))
-                        .build(), userId
-        ).stream().findFirst();
     }
 }

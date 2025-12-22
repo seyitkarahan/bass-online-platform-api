@@ -15,23 +15,18 @@ public class EnrollmentRepository {
 
     public boolean exists(Long studentId, Long courseId) {
         String sql = """
-            SELECT EXISTS (
-                SELECT 1 FROM enrollments
-                WHERE student_id = ? AND course_id = ?
-            )
+            SELECT COUNT(*) FROM enrollments
+            WHERE student_id = ? AND course_id = ?
         """;
 
-        return Boolean.TRUE.equals(
-                jdbcTemplate.queryForObject(
-                        sql,
-                        Boolean.class,
-                        studentId,
-                        courseId
-                )
+        Integer count = jdbcTemplate.queryForObject(
+                sql, Integer.class, studentId, courseId
         );
+
+        return count != null && count > 0;
     }
 
-    public Long save(Enrollment enrollment) {
+    public Long save(Long studentId, Long courseId) {
         String sql = """
             INSERT INTO enrollments (student_id, course_id)
             VALUES (?, ?)
@@ -39,10 +34,7 @@ public class EnrollmentRepository {
         """;
 
         return jdbcTemplate.queryForObject(
-                sql,
-                Long.class,
-                enrollment.getStudentId(),
-                enrollment.getCourseId()
+                sql, Long.class, studentId, courseId
         );
     }
 }

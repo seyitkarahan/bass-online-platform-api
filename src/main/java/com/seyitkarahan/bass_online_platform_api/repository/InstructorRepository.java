@@ -4,6 +4,7 @@ import com.seyitkarahan.bass_online_platform_api.entity.Instructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -15,31 +16,21 @@ public class InstructorRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public Optional<Instructor> findByUserId(Long userId) {
-        String sql = "SELECT * FROM instructors WHERE user_id = ?";
-        return jdbcTemplate.query(sql, (rs, i) ->
-                Instructor.builder()
-                        .id(rs.getLong("id"))
-                        .userId(rs.getLong("user_id"))
-                        .bio(rs.getString("bio"))
-                        .expertise(rs.getString("expertise"))
-                        .build(), userId
-        ).stream().findFirst();
-    }
+    public Optional<Long> findInstructorIdByUserEmail(String email) {
 
-    public Long save(Instructor instructor) {
         String sql = """
-            INSERT INTO instructors (user_id, bio, expertise)
-            VALUES (?, ?, ?)
-            RETURNING id
+            SELECT i.id
+            FROM instructors i
+            JOIN users u ON i.user_id = u.id
+            WHERE u.email = ?
         """;
 
-        return jdbcTemplate.queryForObject(
+        List<Long> result = jdbcTemplate.query(
                 sql,
-                Long.class,
-                instructor.getUserId(),
-                instructor.getBio(),
-                instructor.getExpertise()
+                (rs, rowNum) -> rs.getLong("id"),
+                email
         );
+
+        return result.stream().findFirst();
     }
 }

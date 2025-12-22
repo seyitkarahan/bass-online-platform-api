@@ -5,8 +5,7 @@ import com.seyitkarahan.bass_online_platform_api.repository.rowmapper.CourseRowM
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
+import java.math.BigDecimal;
 
 @Repository
 public class CourseRepository {
@@ -17,16 +16,6 @@ public class CourseRepository {
     public CourseRepository(JdbcTemplate jdbcTemplate, CourseRowMapper rowMapper) {
         this.jdbcTemplate = jdbcTemplate;
         this.rowMapper = rowMapper;
-    }
-
-    public List<Course> findAll() {
-        return jdbcTemplate.query("SELECT * FROM courses", rowMapper);
-    }
-
-    public Optional<Course> findById(Long id) {
-        String sql = "SELECT * FROM courses WHERE id = ?";
-        return jdbcTemplate.query(sql, rowMapper, id)
-                .stream().findFirst();
     }
 
     public Long save(Course course) {
@@ -45,5 +34,49 @@ public class CourseRepository {
                 course.getDescription(),
                 course.getPrice()
         );
+    }
+
+    public Course findById(Long id) {
+        String sql = "SELECT * FROM courses WHERE id = ?";
+        return jdbcTemplate.queryForObject(sql, rowMapper, id);
+    }
+
+    public void update(Course course) {
+        String sql = """
+            UPDATE courses
+            SET title = ?, description = ?, price = ?, category_id = ?
+            WHERE id = ?
+        """;
+
+        jdbcTemplate.update(
+                sql,
+                course.getTitle(),
+                course.getDescription(),
+                course.getPrice(),
+                course.getCategoryId(),
+                course.getId()
+        );
+    }
+
+    public void delete(Long id) {
+        jdbcTemplate.update("DELETE FROM courses WHERE id = ?", id);
+    }
+
+    public boolean isOwner(Long courseId, Long instructorId) {
+        String sql = """
+            SELECT COUNT(*) FROM courses
+            WHERE id = ? AND instructor_id = ?
+        """;
+
+        Integer count = jdbcTemplate.queryForObject(
+                sql, Integer.class, courseId, instructorId
+        );
+
+        return count != null && count > 0;
+    }
+
+    public BigDecimal getPrice(Long courseId) {
+        String sql = "SELECT price FROM courses WHERE id = ?";
+        return jdbcTemplate.queryForObject(sql, BigDecimal.class, courseId);
     }
 }

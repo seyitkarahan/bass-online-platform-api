@@ -15,7 +15,8 @@ public class PaymentRepository {
 
     public Long save(Payment payment) {
         String sql = """
-            INSERT INTO payments (enrollment_id, amount, payment_method, payment_status)
+            INSERT INTO payments
+            (enrollment_id, amount, payment_method, payment_status)
             VALUES (?, ?, ?, ?)
             RETURNING id
         """;
@@ -30,3 +31,4 @@ public class PaymentRepository {
         );
     }
 }
+
