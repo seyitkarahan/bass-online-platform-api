@@ -1,5 +1,6 @@
 package com.seyitkarahan.bass_online_platform_api.repository;
 
+import com.seyitkarahan.bass_online_platform_api.dto.response.QuestionResponse;
 import com.seyitkarahan.bass_online_platform_api.entity.Question;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -15,31 +16,30 @@ public class QuestionRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public List<Question> findByQuizId(Long quizId) {
-        String sql = "SELECT * FROM questions WHERE quiz_id = ?";
-        return jdbcTemplate.query(sql, (rs, i) ->
-                Question.builder()
-                        .id(rs.getLong("id"))
-                        .quizId(rs.getLong("quiz_id"))
-                        .questionText(rs.getString("question_text"))
-                        .answer(rs.getString("answer"))
-                        .build(), quizId
-        );
-    }
-
-    public Long save(Question question) {
+    public void save(Question question) {
         String sql = """
             INSERT INTO questions (quiz_id, question_text, answer)
             VALUES (?, ?, ?)
-            RETURNING id
         """;
 
-        return jdbcTemplate.queryForObject(
-                sql,
-                Long.class,
+        jdbcTemplate.update(sql,
                 question.getQuizId(),
                 question.getQuestionText(),
-                question.getAnswer()
-        );
+                question.getAnswer());
+    }
+
+    public List<QuestionResponse> findByQuiz(Long quizId) {
+        String sql = """
+            SELECT id, question_text
+            FROM questions
+            WHERE quiz_id = ?
+        """;
+
+        return jdbcTemplate.query(sql,
+                (rs, i) -> new QuestionResponse(
+                        rs.getLong("id"),
+                        rs.getString("question_text")
+                ),
+                quizId);
     }
 }
