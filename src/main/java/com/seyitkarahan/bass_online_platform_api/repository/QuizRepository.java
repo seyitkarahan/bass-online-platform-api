@@ -6,7 +6,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public class QuizRepository {
@@ -17,7 +16,7 @@ public class QuizRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public Long save(Quiz quiz) {
+    public Long save(Long courseId, String title) {
         String sql = """
             INSERT INTO quizzes (course_id, title)
             VALUES (?, ?)
@@ -27,8 +26,8 @@ public class QuizRepository {
         return jdbcTemplate.queryForObject(
                 sql,
                 Long.class,
-                quiz.getCourseId(),
-                quiz.getTitle()
+                courseId,
+                title
         );
     }
 
@@ -39,11 +38,19 @@ public class QuizRepository {
             WHERE course_id = ?
         """;
 
-        return jdbcTemplate.query(sql,
+        return jdbcTemplate.query(
+                sql,
                 (rs, i) -> new QuizResponse(
                         rs.getLong("id"),
                         rs.getString("title")
                 ),
-                courseId);
+                courseId
+        );
+    }
+
+    public boolean existsById(Long quizId) {
+        String sql = "SELECT COUNT(*) FROM quizzes WHERE id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, quizId);
+        return count != null && count > 0;
     }
 }

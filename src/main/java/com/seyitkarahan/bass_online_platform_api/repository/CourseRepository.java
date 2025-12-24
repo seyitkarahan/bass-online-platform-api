@@ -141,4 +141,26 @@ public class CourseRepository {
 
         return count != null && count > 0;
     }
+
+    public boolean isInstructorOwnerOfQuiz(Long quizId, String email) {
+
+        String sql = """
+            SELECT COUNT(*)
+            FROM quizzes q
+            JOIN courses c ON c.id = q.course_id
+            JOIN instructors i ON i.id = c.instructor_id
+            JOIN users u ON u.id = i.user_id
+            WHERE q.id = ?
+              AND u.email = ?
+        """;
+
+        Integer count = jdbcTemplate.queryForObject(
+                sql,
+                Integer.class,
+                quizId,
+                email
+        );
+
+        return count != null && count > 0;
+    }
 }

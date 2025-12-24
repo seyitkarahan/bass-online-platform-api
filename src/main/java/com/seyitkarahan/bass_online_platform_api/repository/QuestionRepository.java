@@ -16,16 +16,13 @@ public class QuestionRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public void save(Question question) {
+    public void save(Long quizId, String questionText, String answer) {
         String sql = """
             INSERT INTO questions (quiz_id, question_text, answer)
             VALUES (?, ?, ?)
         """;
 
-        jdbcTemplate.update(sql,
-                question.getQuizId(),
-                question.getQuestionText(),
-                question.getAnswer());
+        jdbcTemplate.update(sql, quizId, questionText, answer);
     }
 
     public List<QuestionResponse> findByQuiz(Long quizId) {
@@ -35,11 +32,42 @@ public class QuestionRepository {
             WHERE quiz_id = ?
         """;
 
-        return jdbcTemplate.query(sql,
+        return jdbcTemplate.query(
+                sql,
                 (rs, i) -> new QuestionResponse(
                         rs.getLong("id"),
                         rs.getString("question_text")
                 ),
-                quizId);
+                quizId
+        );
     }
+
+    public int countByQuiz(Long quizId) {
+        String sql = """
+        SELECT COUNT(*)
+        FROM questions
+        WHERE quiz_id = ?
+    """;
+
+        return jdbcTemplate.queryForObject(
+                sql,
+                Integer.class,
+                quizId
+        );
+    }
+
+    public String findCorrectAnswer(Long questionId) {
+        String sql = """
+        SELECT answer
+        FROM questions
+        WHERE id = ?
+    """;
+
+        return jdbcTemplate.queryForObject(
+                sql,
+                String.class,
+                questionId
+        );
+    }
+
 }
