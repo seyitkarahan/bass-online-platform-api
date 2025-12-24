@@ -1,10 +1,11 @@
 package com.seyitkarahan.bass_online_platform_api.repository;
 
-import com.seyitkarahan.bass_online_platform_api.entity.Rating;
+import com.seyitkarahan.bass_online_platform_api.dto.request.RatingCreateRequest;
+import com.seyitkarahan.bass_online_platform_api.dto.response.RatingResponse;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import java.util.List;
 
 @Repository
 public class RatingRepository {
@@ -15,50 +16,51 @@ public class RatingRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public boolean hasEnrollment(Long studentId, Long courseId) {
+    public void save(Long studentId, RatingCreateRequest request) {
+
         String sql = """
-            SELECT COUNT(*) FROM enrollments
-            WHERE student_id = ? AND course_id = ? AND active = true
+            INSERT INTO ratings (student_id, course_id, rating, comment, created_at)
+            SELECT ?, ?, ?, ?, NOW()
+            WHERE EXISTS (
+                SELECT 1 FROM enrollments
+                WHERE student_id = ?
+                  AND course_id = ?
+                  AND active = true
+            )
         """;
 
-        return jdbcTemplate.queryForObject(
-                sql, Integer.class, studentId, courseId
-        ) > 0;
-    }
-
-    public boolean alreadyRated(Long studentId, Long courseId) {
-        String sql = """
-            SELECT COUNT(*) FROM ratings
-            WHERE student_id = ? AND course_id = ?
-        """;
-
-        return jdbcTemplate.queryForObject(
-                sql, Integer.class, studentId, courseId
-        ) > 0;
-    }
-
-    public void save(Rating rating) {
-        String sql = """
-            INSERT INTO ratings (student_id, course_id, rating, comment)
-            VALUES (?, ?, ?, ?)
-        """;
-
-        jdbcTemplate.update(
+        int updated = jdbcTemplate.update(
                 sql,
-                rating.getStudentId(),
-                rating.getCourseId(),
-                rating.getRating(),
-                rating.getComment()
+                studentId,
+                request.getCourseId(),
+                request.getRating(),
+                request.getComment(),
+                studentId,
+                request.getCourseId()
         );
+
+        if (updated == 0) {
+            throw new RuntimeException("Student not enrolled in this course");
+        }
     }
 
-    public Double averageRating(Long courseId) {
+    public List<RatingResponse> findByCourse(Long courseId) {
+
         String sql = """
-            SELECT AVG(rating)
+            SELECT student_id, rating, comment, created_at
             FROM ratings
             WHERE course_id = ?
+            ORDER BY created_at DESC
         """;
 
-        return jdbcTemplate.queryForObject(sql, Double.class, courseId);
+        return jdbcTemplate.query(
+                sql,
+                (rs, i) -> RatingResponse.builder()
+                        .studentId(rs.getLong("student_id"))
+                        .rating(rs.getInt("rating"))
+                        .comment(rs.getString("comment"))
+                        .build(),
+                courseId
+        );
     }
 }

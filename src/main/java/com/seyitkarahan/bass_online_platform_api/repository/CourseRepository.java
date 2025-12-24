@@ -3,11 +3,13 @@ package com.seyitkarahan.bass_online_platform_api.repository;
 import com.seyitkarahan.bass_online_platform_api.dto.response.CourseResponse;
 import com.seyitkarahan.bass_online_platform_api.entity.Course;
 import com.seyitkarahan.bass_online_platform_api.repository.rowmapper.CourseRowMapper;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class CourseRepository {
@@ -96,4 +98,27 @@ public class CourseRepository {
         String sql = "SELECT price FROM courses WHERE id = ?";
         return jdbcTemplate.queryForObject(sql, BigDecimal.class, courseId);
     }
+
+    public Optional<Long> findInstructorUserId(Long courseId) {
+
+        String sql = """
+        SELECT u.id
+        FROM courses c
+        JOIN instructors i ON i.id = c.instructor_id
+        JOIN users u ON u.id = i.user_id
+        WHERE c.id = ?
+    """;
+
+        try {
+            Long userId = jdbcTemplate.queryForObject(
+                    sql,
+                    Long.class,
+                    courseId
+            );
+            return Optional.ofNullable(userId);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
 }

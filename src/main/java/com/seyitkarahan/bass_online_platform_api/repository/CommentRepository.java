@@ -1,5 +1,6 @@
 package com.seyitkarahan.bass_online_platform_api.repository;
 
+import com.seyitkarahan.bass_online_platform_api.dto.request.CommentCreateRequest;
 import com.seyitkarahan.bass_online_platform_api.dto.response.CommentResponse;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -15,18 +16,37 @@ public class CommentRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public void save(Long userId, Long courseId, String content) {
+    public void save(Long userId, Long studentId, CommentCreateRequest request) {
+
         String sql = """
-            INSERT INTO comments (user_id, course_id, content)
-            VALUES (?, ?, ?)
+            INSERT INTO comments (user_id, course_id, content, created_at)
+            SELECT ?, ?, ?, NOW()
+            WHERE EXISTS (
+                SELECT 1 FROM enrollments
+                WHERE student_id = ?
+                  AND course_id = ?
+                  AND active = true
+            )
         """;
 
-        jdbcTemplate.update(sql, userId, courseId, content);
+        int updated = jdbcTemplate.update(
+                sql,
+                userId,
+                request.getCourseId(),
+                request.getContent(),
+                studentId,
+                request.getCourseId()
+        );
+
+        if (updated == 0) {
+            throw new RuntimeException("User not enrolled in this course");
+        }
     }
 
     public List<CommentResponse> findByCourse(Long courseId) {
+
         String sql = """
-            SELECT c.content, c.created_at, u.name
+            SELECT u.name, c.content, c.created_at
             FROM comments c
             JOIN users u ON u.id = c.user_id
             WHERE c.course_id = ?
@@ -35,12 +55,11 @@ public class CommentRepository {
 
         return jdbcTemplate.query(
                 sql,
-                (rs, i) -> new CommentResponse(
-                        rs.getLong("id"),
-                        rs.getString("userName"),
-                        rs.getString("content"),
-                        rs.getTimestamp("created_at").toLocalDateTime()
-                ),
+                (rs, i) -> CommentResponse.builder()
+                        .userName(rs.getString("name"))
+                        .content(rs.getString("content"))
+                        .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
+                        .build(),
                 courseId
         );
     }
@@ -55,7 +74,6 @@ public class CommentRepository {
 
         return jdbcTemplate.query(sql,
                 (rs, i) -> new CommentResponse(
-                        rs.getLong("id"),
                         rs.getString("userName"),
                         rs.getString("content"),
                         rs.getTimestamp("created_at").toLocalDateTime()

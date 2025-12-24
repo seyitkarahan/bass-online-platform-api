@@ -6,6 +6,7 @@ import com.seyitkarahan.bass_online_platform_api.service.CommentService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,23 +22,15 @@ public class CommentController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> comment(
-            @RequestBody @Valid CommentCreateRequest request,
-            Authentication authentication
+    public void addComment(
+            @AuthenticationPrincipal String email,
+            @RequestBody CommentCreateRequest request
     ) {
-        commentService.addComment(
-                request,
-                authentication.getName()
-        );
-        return ResponseEntity.ok().build();
+        commentService.addComment(email, request);
     }
 
     @GetMapping("/course/{courseId}")
-    public ResponseEntity<List<CommentResponse>> comments(
-            @PathVariable Long courseId
-    ) {
-        return ResponseEntity.ok(
-                commentService.getCourseComments(courseId)
-        );
+    public List<CommentResponse> getComments(@PathVariable Long courseId) {
+        return commentService.getCourseComments(courseId);
     }
 }
