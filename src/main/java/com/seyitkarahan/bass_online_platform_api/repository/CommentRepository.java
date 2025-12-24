@@ -1,6 +1,6 @@
 package com.seyitkarahan.bass_online_platform_api.repository;
 
-import com.seyitkarahan.bass_online_platform_api.entity.Comment;
+import com.seyitkarahan.bass_online_platform_api.dto.response.CommentResponse;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -15,32 +15,32 @@ public class CommentRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public List<Comment> findByCourseId(Long courseId) {
-        String sql = "SELECT * FROM comments WHERE course_id = ?";
-        return jdbcTemplate.query(sql, (rs, i) ->
-                Comment.builder()
-                        .id(rs.getLong("id"))
-                        .userId(rs.getLong("user_id"))
-                        .courseId(rs.getLong("course_id"))
-                        .content(rs.getString("content"))
-                        .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
-                        .build(), courseId
-        );
-    }
-
-    public Long save(Comment comment) {
+    public void save(Long userId, Long courseId, String content) {
         String sql = """
             INSERT INTO comments (user_id, course_id, content)
             VALUES (?, ?, ?)
-            RETURNING id
         """;
 
-        return jdbcTemplate.queryForObject(
+        jdbcTemplate.update(sql, userId, courseId, content);
+    }
+
+    public List<CommentResponse> findByCourse(Long courseId) {
+        String sql = """
+            SELECT c.content, c.created_at, u.name
+            FROM comments c
+            JOIN users u ON u.id = c.user_id
+            WHERE c.course_id = ?
+            ORDER BY c.created_at DESC
+        """;
+
+        return jdbcTemplate.query(
                 sql,
-                Long.class,
-                comment.getUserId(),
-                comment.getCourseId(),
-                comment.getContent()
+                (rs, i) -> new CommentResponse(
+                        rs.getString("content"),
+                        rs.getString("name"),
+                        rs.getTimestamp("created_at").toLocalDateTime()
+                ),
+                courseId
         );
     }
 }

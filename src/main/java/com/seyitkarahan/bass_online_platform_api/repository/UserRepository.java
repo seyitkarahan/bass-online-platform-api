@@ -43,6 +43,16 @@ public class UserRepository {
         ).stream().findFirst();
     }
 
+    public Optional<Long> findIdByEmail(String email) {
+        String sql = "SELECT id FROM users WHERE email = ?";
+        return jdbcTemplate.query(
+                sql,
+                (rs, i) -> rs.getLong("id"),
+                email
+        ).stream().findFirst();
+    }
+
+
     public boolean existsByEmail(String email) {
         String sql = "SELECT COUNT(*) FROM users WHERE email = ?";
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, email);

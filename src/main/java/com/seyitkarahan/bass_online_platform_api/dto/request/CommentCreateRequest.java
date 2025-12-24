@@ -8,6 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class CommentCreateRequest {
+    private Long courseId;
     private String content;
 }
 

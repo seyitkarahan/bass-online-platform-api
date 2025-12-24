@@ -15,38 +15,50 @@ public class RatingRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public Optional<Rating> findByStudentAndCourse(Long studentId, Long courseId) {
+    public boolean hasEnrollment(Long studentId, Long courseId) {
         String sql = """
-            SELECT * FROM ratings
-            WHERE student_id = ? AND course_id = ?
-        """;
-
-        return jdbcTemplate.query(sql, (rs, i) ->
-                Rating.builder()
-                        .id(rs.getLong("id"))
-                        .studentId(rs.getLong("student_id"))
-                        .courseId(rs.getLong("course_id"))
-                        .rating(rs.getInt("rating"))
-                        .comment(rs.getString("comment"))
-                        .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
-                        .build(), studentId, courseId
-        ).stream().findFirst();
-    }
-
-    public Long save(Rating rating) {
-        String sql = """
-            INSERT INTO ratings (student_id, course_id, rating, comment)
-            VALUES (?, ?, ?, ?)
-            RETURNING id
+            SELECT COUNT(*) FROM enrollments
+            WHERE student_id = ? AND course_id = ? AND active = true
         """;
 
         return jdbcTemplate.queryForObject(
+                sql, Integer.class, studentId, courseId
+        ) > 0;
+    }
+
+    public boolean alreadyRated(Long studentId, Long courseId) {
+        String sql = """
+            SELECT COUNT(*) FROM ratings
+            WHERE student_id = ? AND course_id = ?
+        """;
+
+        return jdbcTemplate.queryForObject(
+                sql, Integer.class, studentId, courseId
+        ) > 0;
+    }
+
+    public void save(Rating rating) {
+        String sql = """
+            INSERT INTO ratings (student_id, course_id, rating, comment)
+            VALUES (?, ?, ?, ?)
+        """;
+
+        jdbcTemplate.update(
                 sql,
-                Long.class,
                 rating.getStudentId(),
                 rating.getCourseId(),
                 rating.getRating(),
                 rating.getComment()
         );
+    }
+
+    public Double averageRating(Long courseId) {
+        String sql = """
+            SELECT AVG(rating)
+            FROM ratings
+            WHERE course_id = ?
+        """;
+
+        return jdbcTemplate.queryForObject(sql, Double.class, courseId);
     }
 }
