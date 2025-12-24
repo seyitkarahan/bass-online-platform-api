@@ -12,12 +12,11 @@ import java.time.LocalDateTime;
 public class Payment {
 
     private Long id;
-    private Long enrollmentId;
+    private Long studentId;
 
     private BigDecimal amount;
     private String paymentMethod;
-    private String paymentStatus;
+    private String paymentStatus; // PENDING, SUCCESS, FAILED
 
     private LocalDateTime paymentDate;
 }
-

@@ -24,10 +24,11 @@ public class PaymentRepository {
         return jdbcTemplate.queryForObject(
                 sql,
                 Long.class,
-                payment.getEnrollmentId(),
+                payment.getStudentId(),
                 payment.getAmount(),
                 payment.getPaymentMethod(),
-                payment.getPaymentStatus()
+                payment.getPaymentStatus(),
+                payment.getPaymentDate()
         );
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Service
 public class PurchaseService {
@@ -53,10 +54,11 @@ public class PurchaseService {
                 .getPrice(request.getCourseId());
 
         Payment payment = Payment.builder()
-                .enrollmentId(enrollmentId)
+                .studentId(studentId)
                 .amount(price)
                 .paymentMethod(request.getPaymentMethod())
                 .paymentStatus("SUCCESS")
+                .paymentDate(LocalDateTime.now())
                 .build();
 
         paymentRepository.save(payment);

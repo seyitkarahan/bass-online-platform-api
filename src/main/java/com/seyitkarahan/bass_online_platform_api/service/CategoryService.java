@@ -1,6 +1,7 @@
 package com.seyitkarahan.bass_online_platform_api.service;
 
 import com.seyitkarahan.bass_online_platform_api.dto.request.CategoryCreateRequest;
+import com.seyitkarahan.bass_online_platform_api.dto.request.CategoryUpdateRequest;
 import com.seyitkarahan.bass_online_platform_api.dto.response.CategoryResponse;
 import com.seyitkarahan.bass_online_platform_api.repository.CategoryRepository;
 import org.springframework.stereotype.Service;
@@ -33,5 +34,27 @@ public class CategoryService {
 
     public void deleteCategory(Long categoryId) {
         categoryRepository.deleteById(categoryId);
+    }
+
+    public void updateCategory(
+            Long categoryId,
+            CategoryUpdateRequest request
+    ) {
+        if (!categoryRepository.existsById(categoryId)) {
+            throw new RuntimeException("Category not found");
+        }
+
+        if (categoryRepository.existsByNameAndNotId(
+                request.getName(),
+                categoryId
+        )) {
+            throw new RuntimeException("Category name already exists");
+        }
+
+        categoryRepository.update(
+                categoryId,
+                request.getName(),
+                request.getDescription()
+        );
     }
 }

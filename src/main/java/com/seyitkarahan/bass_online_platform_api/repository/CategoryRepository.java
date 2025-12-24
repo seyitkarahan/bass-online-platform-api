@@ -55,4 +55,34 @@ public class CategoryRepository {
         String sql = "DELETE FROM categories WHERE id = ?";
         jdbcTemplate.update(sql, id);
     }
+
+    public void update(Long id, String name, String description) {
+        String sql = """
+            UPDATE categories
+            SET name = ?, description = ?
+            WHERE id = ?
+        """;
+
+        int updated = jdbcTemplate.update(sql, name, description, id);
+
+        if (updated == 0) {
+            throw new RuntimeException("Category not found");
+        }
+    }
+
+    public boolean existsById(Long id) {
+        String sql = "SELECT COUNT(*) FROM categories WHERE id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, id);
+        return count != null && count > 0;
+    }
+
+    public boolean existsByNameAndNotId(String name, Long id) {
+        String sql = """
+            SELECT COUNT(*)
+            FROM categories
+            WHERE name = ? AND id <> ?
+        """;
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, name, id);
+        return count != null && count > 0;
+    }
 }
