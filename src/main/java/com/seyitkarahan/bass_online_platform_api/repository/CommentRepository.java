@@ -36,11 +36,34 @@ public class CommentRepository {
         return jdbcTemplate.query(
                 sql,
                 (rs, i) -> new CommentResponse(
+                        rs.getLong("id"),
+                        rs.getString("userName"),
                         rs.getString("content"),
-                        rs.getString("name"),
                         rs.getTimestamp("created_at").toLocalDateTime()
                 ),
                 courseId
         );
     }
+
+    public List<CommentResponse> findAll() {
+        String sql = """
+        SELECT c.id, c.content, c.created_at, u.email
+        FROM comments c
+        JOIN users u ON u.id = c.user_id
+        ORDER BY c.created_at DESC
+    """;
+
+        return jdbcTemplate.query(sql,
+                (rs, i) -> new CommentResponse(
+                        rs.getLong("id"),
+                        rs.getString("userName"),
+                        rs.getString("content"),
+                        rs.getTimestamp("created_at").toLocalDateTime()
+                ));
+    }
+
+    public void delete(Long commentId) {
+        jdbcTemplate.update("DELETE FROM comments WHERE id = ?", commentId);
+    }
+
 }

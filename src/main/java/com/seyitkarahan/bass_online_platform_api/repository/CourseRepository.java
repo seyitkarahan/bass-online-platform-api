@@ -1,11 +1,13 @@
 package com.seyitkarahan.bass_online_platform_api.repository;
 
+import com.seyitkarahan.bass_online_platform_api.dto.response.CourseResponse;
 import com.seyitkarahan.bass_online_platform_api.entity.Course;
 import com.seyitkarahan.bass_online_platform_api.repository.rowmapper.CourseRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Repository
 public class CourseRepository {
@@ -58,8 +60,23 @@ public class CourseRepository {
         );
     }
 
-    public void delete(Long id) {
-        jdbcTemplate.update("DELETE FROM courses WHERE id = ?", id);
+    public List<CourseResponse> findAll() {
+        String sql = """
+        SELECT id, title, price, created_at
+        FROM courses
+    """;
+
+        return jdbcTemplate.query(sql,
+                (rs, i) -> new CourseResponse(
+                        rs.getLong("id"),
+                        rs.getString("title"),
+                        rs.getString("description"),
+                        rs.getBigDecimal("price")
+                ));
+    }
+
+    public void delete(Long courseId) {
+        jdbcTemplate.update("DELETE FROM courses WHERE id = ?", courseId);
     }
 
     public boolean isOwner(Long courseId, Long instructorId) {

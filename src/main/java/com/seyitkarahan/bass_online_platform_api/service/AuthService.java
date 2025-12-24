@@ -42,7 +42,7 @@ public class AuthService {
                 .name(request.getName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role("STUDENT")
+                .role("ADMIN")
                 .build();
 
         Long userId = userRepository.save(user);
