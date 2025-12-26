@@ -5,6 +5,7 @@ import com.seyitkarahan.bass_online_platform_api.dto.request.CategoryUpdateReque
 import com.seyitkarahan.bass_online_platform_api.dto.response.CategoryResponse;
 import com.seyitkarahan.bass_online_platform_api.repository.CategoryRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -36,6 +37,7 @@ public class CategoryService {
         categoryRepository.deleteById(categoryId);
     }
 
+    @Transactional
     public void updateCategory(
             Long categoryId,
             CategoryUpdateRequest request
