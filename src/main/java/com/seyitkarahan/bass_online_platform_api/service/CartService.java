@@ -1,12 +1,12 @@
 package com.seyitkarahan.bass_online_platform_api.service;
 
 import com.seyitkarahan.bass_online_platform_api.dto.request.CartItemAddRequest;
-import com.seyitkarahan.bass_online_platform_api.dto.response.CartItemResponse;
 import com.seyitkarahan.bass_online_platform_api.dto.response.CartResponse;
 import com.seyitkarahan.bass_online_platform_api.repository.CartItemRepository;
 import com.seyitkarahan.bass_online_platform_api.repository.CartRepository;
 import com.seyitkarahan.bass_online_platform_api.repository.StudentRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,7 +28,9 @@ public class CartService {
         this.studentRepository = studentRepository;
     }
 
+    @Transactional
     public void addToCart(String userEmail, CartItemAddRequest request) {
+
         Long studentId = studentRepository
                 .findStudentIdByUserEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -44,9 +46,12 @@ public class CartService {
         }
 
         cartItemRepository.addItem(cartId, request.getCourseId());
+        // burada hata olursa tüm işlemler rollback olur
     }
 
+    @Transactional(readOnly = true)
     public CartResponse getCart(String userEmail) {
+
         Long studentId = studentRepository
                 .findStudentIdByUserEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -54,11 +59,7 @@ public class CartService {
         Long cartId = cartRepository.findCartIdByStudent(studentId);
 
         if (cartId == null) {
-            return new CartResponse(
-                    null,
-                    List.of(),
-                    BigDecimal.ZERO
-            );
+            return new CartResponse(null, List.of(), BigDecimal.ZERO);
         }
 
         var items = cartItemRepository.findItems(cartId);
@@ -70,7 +71,7 @@ public class CartService {
         return new CartResponse(cartId, items, total);
     }
 
-
+    @Transactional
     public void removeFromCart(Long cartItemId) {
         cartItemRepository.removeItem(cartItemId);
     }
